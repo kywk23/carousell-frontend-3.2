@@ -1,10 +1,10 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import { useNavigate } from "react-router-dom";
-
 import { BACKEND_URL } from "../../constants";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const NewListingForm = () => {
   const [title, setTitle] = useState("");
@@ -14,6 +14,18 @@ const NewListingForm = () => {
   const [description, setDescription] = useState("");
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
+  const [token, setToken] = useState("");
+
+  //Auth0
+  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchToken = getAccessTokenSilently();
+      console.log(`fetchtok`, fetchToken);
+      setToken(fetchToken);
+    }
+  }, [isAuthenticated, getAccessTokenSilently]);
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -42,17 +54,24 @@ const NewListingForm = () => {
   const handleSubmit = (event) => {
     // Prevent default form redirect on submission
     event.preventDefault();
-
     // Send request to create new listing in backend
     axios
-      .post(`${BACKEND_URL}/listings`, {
-        title,
-        category,
-        condition,
-        price,
-        description,
-        shippingDetails,
-      })
+      .post(
+        `${BACKEND_URL}/listings`,
+        {
+          title,
+          category,
+          condition,
+          price,
+          description,
+          shippingDetails,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then((res) => {
         // Clear form state
         setTitle("");
@@ -61,7 +80,6 @@ const NewListingForm = () => {
         setPrice(0);
         setDescription("");
         setShippingDetails("");
-
         // Navigate to listing-specific page after submitting form
         navigate(`/listings/${res.data.id}`);
       });
