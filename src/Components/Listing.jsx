@@ -11,26 +11,18 @@ const Listing = () => {
   const [listingId, setListingId] = useState();
   const [listing, setListing] = useState({});
 
-  const [buyerId, setBuyerId] = useState("");
   const [token, setToken] = useState("");
   const { isAuthenticated, loginWithRedirect, user, getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {
-    console.log(`fetch token:`, token);
-  }, [token]);
-
-  useEffect(() => {
     const fetchData = async () => {
       if (isAuthenticated) {
-        const fetchBuyerId = user.sub.split("|")[1];
         const fetchToken = await getAccessTokenSilently();
         setToken(fetchToken);
-        console.log(`fetch sub`, fetchBuyerId);
-        setBuyerId(fetchBuyerId);
       }
     };
     fetchData();
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, user]);
 
   useEffect(() => {
     // RENDERING - If there is a listingId, retrieve the listing data
@@ -56,11 +48,10 @@ const Listing = () => {
   }
 
   const handleClick = async () => {
-    console.log("Access Token:", token);
     try {
       const response = await axios.put(
         `${BACKEND_URL}/listings/${listingId}`,
-        { buyerId: buyerId },
+        { userEmail: user.email },
         {
           headers: {
             Authorization: `Bearer ${token}`,

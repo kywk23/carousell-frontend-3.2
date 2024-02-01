@@ -15,17 +15,34 @@ const NewListingForm = () => {
   const [shippingDetails, setShippingDetails] = useState("");
   const navigate = useNavigate();
   const [token, setToken] = useState("");
-
+  const [userEmail, getUserEmail] = useState("");
   //Auth0
-  const { isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
+  const [sellerId, setSellerId] = useState("");
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const fetchToken = getAccessTokenSilently();
-      console.log(`fetchtok`, fetchToken);
-      setToken(fetchToken);
-    }
-  }, [isAuthenticated, getAccessTokenSilently]);
+    const fetchData = async () => {
+      if (isAuthenticated) {
+        getUserEmail(user.email);
+        console.log(`Email:`, userEmail);
+        const fetchToken = await getAccessTokenSilently();
+        console.log(`fetchtok`, fetchToken);
+        setToken(fetchToken);
+      }
+      const checkUserEmail = async () => {
+        try {
+          const res = await axios.get(`${BACKEND_URL}/listings/users/${user.email}`);
+          console.log(res.data);
+          setSellerId(res.data[0].id);
+          console.log(sellerId);
+        } catch (err) {
+          console.log(err);
+        }
+      };
+      checkUserEmail();
+    };
+    fetchData();
+  }, [isAuthenticated, getAccessTokenSilently, user, userEmail, sellerId]);
 
   const handleChange = (event) => {
     switch (event.target.name) {
@@ -65,6 +82,7 @@ const NewListingForm = () => {
           price,
           description,
           shippingDetails,
+          sellerId,
         },
         {
           headers: {
@@ -120,7 +138,7 @@ const NewListingForm = () => {
       <Form.Group>
         <Form.Label>Price ($)</Form.Label>
         <Form.Control
-          type="text"
+          type="number"
           name="price"
           value={price}
           onChange={handleChange}

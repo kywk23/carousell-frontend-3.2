@@ -2,18 +2,32 @@ import logo from "/logo.png";
 import "./App.css";
 import { Outlet } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { BACKEND_URL } from "../constants";
 
 // TEST ACCOUNT:
 //fakeemail@hotmail.com
 // testtest1!
 function App() {
-  const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
+  const { loginWithRedirect, logout, user, isAuthenticated, getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {
-    console.log(isAuthenticated);
-    console.log(user);
-  }, [user]);
+    if (isAuthenticated) {
+      getAccessTokenSilently().then((res) => {
+        console.log(res);
+        axios.post(
+          `${BACKEND_URL}/listings/users`,
+          { userEmail: user.email },
+          {
+            headers: {
+              Authorization: `Bearer ${res}`,
+            },
+          }
+        );
+      });
+    }
+  }, [isAuthenticated, user, getAccessTokenSilently]);
 
   return (
     <>
